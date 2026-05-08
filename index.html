@@ -108,17 +108,23 @@
         }
 
         .hero-video {
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            min-width: 100%;
-            min-height: 100%;
-            width: auto;
-            height: auto;
-            transform: translate(-50%, -50%);
-            object-fit: cover;
-            z-index: -2;
-        }
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    min-width: 100%;
+    min-height: 100%;
+    width: auto;
+    height: auto;
+    transform: translate(-50%, -50%);
+    object-fit: cover;
+    z-index: -2;
+    opacity: 0;
+    transition: opacity 0.8s ease;
+}
+
+.hero-video.loaded {
+    opacity: 1;
+}
 
         .hero-poster {
             position: absolute;
@@ -734,16 +740,17 @@
         <div class="hero-poster"></div>
 
         <!-- Видеофон -->
-        <video
-            class="hero-video"
-            autoplay
-            muted
-            loop
-            playsinline
-            poster="hero.jpg"
-        >
-            <source src="hero.mp4" type="video/mp4">
-        </video>
+       <video
+    class="hero-video"
+    id="heroVideo"
+    autoplay
+    muted
+    loop
+    playsinline
+    poster="hero.jpg"
+>
+    <source src="hero.mp4" type="video/mp4">
+</video>
 
         <div class="content">
             <div class="topline">Тамбовская область</div>
@@ -1086,6 +1093,28 @@
 
         /* ===== INIT ===== */
         renderCatalog();
+
+/* ===== VIDEO SMOOTH LOAD & LOOP FIX ===== */
+        const heroVideo = document.getElementById('heroVideo');
+
+        // Плавное появление видео когда оно загрузилось
+        heroVideo.addEventListener('canplaythrough', () => {
+            heroVideo.classList.add('loaded');
+        });
+
+        // Если видео уже в кэше
+        if (heroVideo.readyState >= 4) {
+            heroVideo.classList.add('loaded');
+        }
+
+        // Фикс моргания при зацикливании
+        heroVideo.addEventListener('timeupdate', () => {
+            if (heroVideo.duration - heroVideo.currentTime < 0.3) {
+                heroVideo.currentTime = 0;
+                heroVideo.play();
+            }
+        });
+
     </script>
 </body>
 </html>

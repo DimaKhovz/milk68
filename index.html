@@ -117,9 +117,14 @@
     height: auto;
     transform: translate(-50%, -50%);
     object-fit: cover;
-    z-index: -2;
+    z-index: -3;
     opacity: 0;
-    transition: opacity 0.8s ease;
+    transition: opacity 1.5s ease; /* Плавная смена видео */
+}
+
+.hero-video.active {
+    opacity: 1;
+    z-index: -2; /* Активное видео выходит на передний план */
 }
 
 .hero-video.loaded {
@@ -1090,25 +1095,39 @@
         /* ===== INIT ===== */
         renderCatalog();
 
-/* ===== VIDEO SMOOTH LOAD & LOOP FIX ===== */
-        const heroVideo = document.getElementById('heroVideo');
+/* ===== DAY/NIGHT VIDEO LOGIC ===== */
+        const videoDay = document.getElementById('heroVideoDay');
+        const videoNight = document.getElementById('heroVideoNight');
 
-        // Плавное появление видео когда оно загрузилось
-        heroVideo.addEventListener('canplaythrough', () => {
-            heroVideo.classList.add('loaded');
-        });
+        function updateVideo() {
+            const hour = new Date().getHours();
+            // Ночь считается с 20:00 вечера до 06:00 утра
+            const isNight = hour >= 20 || hour < 6;
 
-        // Если видео уже в кэше
-        if (heroVideo.readyState >= 4) {
-            heroVideo.classList.add('loaded');
+            if (isNight) {
+                videoDay.classList.remove('active');
+                videoNight.classList.add('active');
+            } else {
+                videoNight.classList.remove('active');
+                videoDay.classList.add('active');
+            }
         }
 
-        // Фикс моргания при зацикливании
-        heroVideo.addEventListener('timeupdate', () => {
-            if (heroVideo.duration - heroVideo.currentTime < 0.3) {
-                heroVideo.currentTime = 0;
-                heroVideo.play();
-            }
+        // Проверяем время сразу при загрузке
+        updateVideo();
+
+        // Проверяем время каждую минуту (если сайт долго открыт)
+        setInterval(updateVideo, 60000);
+
+        // Фикс моргания при зацикливании для обоих видео
+        [videoDay, videoNight].forEach(video => {
+            if (!video) return;
+            video.addEventListener('timeupdate', () => {
+                if (video.duration - video.currentTime < 0.3) {
+                    video.currentTime = 0;
+                    video.play();
+                }
+            });
         });
 
     </script>

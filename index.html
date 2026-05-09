@@ -121,9 +121,9 @@
             transition: opacity 0.8s ease;
         }
 
-        .hero-video.loaded {
-            opacity: 1;
-        }
+        .hero-video.active.loaded {
+    opacity: 1;
+}
 
         .hero-poster {
             position: absolute;
@@ -731,10 +731,10 @@
 
     <section class="hero">
         <div class="hero-poster"></div>
-        <video class="hero-video active" id="heroVideoDay" autoplay muted loop playsinline poster="hero.jpg">
+        <video class="hero-video" id="heroVideoDay" autoplay muted loop playsinline poster="hero.jpg">
             <source src="hero.mp4" type="video/mp4">
         </video>
-        <video class="hero-video" id="heroVideoNight" autoplay muted loop playsinline poster="hero.jpg">
+        <video class="hero-video" id="heroVideoNight" autoplay muted loop playsinline poster="hero-night.jpg">
             <source src="hero-night.mp4" type="video/mp4">
         </video>
 
@@ -882,8 +882,7 @@
             {
                 id: 'butter', emoji: '🧈', name: 'Масло сливочное', desc: 'Натуральное, любая фасовка',
                 options: [
-                    { id: 'butter-100', name: '100 г', price: 100 },
-                    { id: 'butter-1000', name: '1 кг', price: 1000 }
+                    { id: 'butter-100', name: '100 г', price: 100 }
                 ]
             },
             {
@@ -984,13 +983,45 @@
             document.getElementById('siteHeader').classList.toggle('scrolled', window.scrollY > 60);
         });
 
-        /* ===== VIDEO ===== */
-        const heroVideo = document.getElementById('heroVideoDay');
-        heroVideo.addEventListener('canplaythrough', () => heroVideo.classList.add('loaded'));
-        if (heroVideo.readyState >= 4) heroVideo.classList.add('loaded');
-        heroVideo.addEventListener('timeupdate', () => {
-            if (heroVideo.duration - heroVideo.currentTime < 0.3) { heroVideo.currentTime = 0; heroVideo.play(); }
-        });
+       /* ===== VIDEO ===== */
+const videoDay = document.getElementById('heroVideoDay');
+const videoNight = document.getElementById('heroVideoNight');
+
+function isDayTime() {
+    const hour = new Date().getHours();
+    return hour >= 6 && hour < 21;
+}
+
+function setupVideo(video) {
+    video.addEventListener('canplaythrough', () => {
+        video.classList.add('loaded');
+    });
+    if (video.readyState >= 4) video.classList.add('loaded');
+    video.addEventListener('timeupdate', () => {
+        if (video.duration - video.currentTime < 0.3) {
+            video.currentTime = 0;
+            video.play();
+        }
+    });
+}
+
+function switchVideo() {
+    if (isDayTime()) {
+        videoDay.classList.add('active');
+        videoNight.classList.remove('active');
+        videoDay.play();
+        videoNight.pause();
+    } else {
+        videoNight.classList.add('active');
+        videoDay.classList.remove('active');
+        videoNight.play();
+        videoDay.pause();
+    }
+}
+
+setupVideo(videoDay);
+setupVideo(videoNight);
+switchVideo();
 
         /* ===== BUTTERFLY ===== */
         (function() {

@@ -674,6 +674,96 @@
             transform: translateY(-2px);
         }
 
+        .panel-tabs {
+            display: flex;
+            gap: 0;
+            margin-bottom: 16px;
+            border-radius: 10px;
+            overflow: hidden;
+            border: 1px solid rgba(59, 42, 34, 0.12);
+        }
+
+        .panel-tab {
+            flex: 1;
+            padding: 12px 16px;
+            border: none;
+            background: #f9f6f2;
+            font-size: 15px;
+            font-weight: 600;
+            color: #7b5e4b;
+            cursor: pointer;
+            transition: 0.2s ease;
+        }
+
+        .panel-tab.active {
+            background: #3b2a22;
+            color: #fff;
+        }
+
+        .panel-tab:hover:not(.active) {
+            background: #efe8e0;
+        }
+
+        .cart-content {
+            flex: 1;
+            overflow-y: auto;
+        }
+
+        .cart-item {
+            padding: 16px 0;
+            border-bottom: 1px solid rgba(59, 42, 34, 0.12);
+        }
+
+        .cart-item:last-child {
+            border-bottom: none;
+        }
+
+        .cart-item-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 10px;
+        }
+
+        .cart-item-name {
+        font-size: 16px;
+            font-weight: 600;
+            color: #3b2a22;
+        }
+
+        .cart-item-volume {
+            font-size: 14px;
+            color: #7b5e4b;
+            margin-top: 2px;
+        }
+
+        .cart-item-controls {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-top: 8px;
+        }
+
+        .cart-item-qty {
+         display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .cart-item-price {
+            font-size: 16px;
+            font-weight: 700;
+            color: #3b2a22;
+        }
+
+        .cart-empty {
+            text-align: center;
+            padding: 40px 20px;
+            color: #7b5e4b;
+            font-size: 15px;
+            line-height: 1.6;
+        }
+
         .burger {
             display: none;
             background: none;
@@ -901,7 +991,12 @@
             <h2>Наш продукт</h2>
             <button class="close-btn" id="closeCatalog">×</button>
         </div>
+        <div class="panel-tabs">
+            <button class="panel-tab active" data-tab="catalog">📋 Каталог</button>
+            <button class="panel-tab" data-tab="cart">🛒 Корзина</button>
+        </div>
         <div class="catalog-content" id="catalogContent"></div>
+        <div class="cart-content" id="cartContent" style="display:none;"></div>
         <div class="cart-summary">
             <div class="cart-total">
                 <span>Итого:</span>
@@ -998,6 +1093,7 @@
             if (delta < 0) butterflyFlee();
 
             renderCatalog();
+            renderCart();
         }
 
         function updateTotal() {
@@ -1023,19 +1119,88 @@
         }
 
         /* ===== PANEL LOGIC ===== */
-        function openPanel() {
+        function openPanel(tab = 'catalog') {
             document.getElementById('catalogPanel').classList.add('active');
             document.getElementById('backdrop').classList.add('active');
+            switchTab(tab);
         }
         function closePanel() {
             document.getElementById('catalogPanel').classList.remove('active');
             document.getElementById('backdrop').classList.remove('active');
         }
-        document.getElementById('openCatalog').addEventListener('click', openPanel);
+
+        function switchTab(tab) {
+            const catalogContent = document.getElementById('catalogContent');
+            const cartContent = document.getElementById('cartContent');
+            const tabs = document.querySelectorAll('.panel-tab');
+
+            tabs.forEach(t => {
+                if (t.dataset.tab === tab) {
+                    t.classList.add('active');
+                } else {
+                    t.classList.remove('active');
+                }
+            });
+
+            if (tab === 'catalog') {
+                catalogContent.style.display = 'block';
+                cartContent.style.display = 'none';
+            } else if (tab === 'cart') {
+                catalogContent.style.display = 'none';
+                cartContent.style.display = 'block';
+                renderCart();
+            }
+        }
+
+        function renderCart() {
+            const container = document.getElementById('cartContent');
+            container.innerHTML = '';
+
+            let hasItems = false;
+            products.forEach(product => {
+                product.options.forEach(option => {
+                    if (cart[option.id] && cart[option.id] > 0) {
+                        hasItems = true;
+                        const itemDiv = document.createElement('div');
+                        itemDiv.className = 'cart-item';
+                        itemDiv.innerHTML = `
+                            <div class="cart-item-header">
+                                <div>
+                                    <div class="cart-item-name">${product.emoji} ${product.name}</div>
+                                    <div class="cart-item-volume">${option.name}</div>
+                                </div>
+                            </div>
+                            <div class="cart-item-controls">
+                                <div class="cart-item-qty">
+                                    <button class="qty-btn minus-btn" data-id="${option.id}">−</button>
+                                    <div class="qty-display">${cart[option.id]}</div>
+                                    <button class="qty-btn plus-btn" data-id="${option.id}">+</button>
+                                </div>
+                                <div class="cart-item-price">${cart[option.id] * option.price} ₽</div>
+                            </div>`;
+                        container.appendChild(itemDiv);
+                    }
+                });
+            });
+
+            if (!hasItems) {
+                container.innerHTML = '<div class="cart-empty">Корзина пуста.<br>Выберите товары в каталоге.</div>';
+            } else {
+                container.querySelectorAll('.plus-btn').forEach(btn => btn.onclick = () => changeQty(btn.dataset.id, 1));
+                container.querySelectorAll('.minus-btn').forEach(btn => btn.onclick = () => changeQty(btn.dataset.id, -1));
+            }
+        }
+
+        document.getElementById('openCatalog').addEventListener('click', () => openPanel('catalog'));
         document.getElementById('closeCatalog').addEventListener('click', closePanel);
         document.getElementById('backdrop').addEventListener('click', closePanel);
-        document.querySelector('.open-catalog-link').addEventListener('click', (e) => { e.preventDefault(); openPanel(); });
+        document.querySelector('.open-catalog-link').addEventListener('click', (e) => { e.preventDefault(); openPanel('catalog'); });
+        document.getElementById('burgerBtn').addEventListener('click', () => openPanel('cart'));
         document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closePanel(); });
+
+        document.querySelectorAll('.panel-tab').forEach(tab => {
+            tab.addEventListener('click', () => switchTab(tab.dataset.tab));
+        });
 
         document.getElementById('orderBtn').addEventListener('click', () => {
             const methods = document.getElementById('orderMethods');
